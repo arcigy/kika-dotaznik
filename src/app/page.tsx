@@ -1,222 +1,337 @@
 'use client';
-
 import React, { useState } from 'react';
-import { 
-  Bot, Building, Zap, Banknote, Timer, TrendingUp, CheckCircle2, 
-  ShieldCheck, Layers, Clock, ArrowRight, ArrowLeft, Check, 
-  Smile, AlertCircle 
-} from 'lucide-react';
+import { Check, ArrowRight } from 'lucide-react';
 
-const SECTIONS_COUNT = 6;
+const valueMap: Record<string,string> = {
+  small:'Malý podnik (10-49)', medium:'Stredný podnik (50-249)',
+  ecom:'Maloobchod/E-commerce', industry:'Priemyselná výroba',
+  construction:'Stavebníctvo', logistics:'Doprava a logistika',
+  horeca:'HoReCa', finance:'Finančné služby', it:'IT a telekomunikácie',
+  admin:'Administratívne služby', consulting:'Poradenstvo a účtovníctvo',
+  marketing:'Marketing a reklama', other:'Iné',
+  content:'Tvorba obsahu', support:'Zákaznícka podpora',
+  admn:'Automatizácia administratívy', mktg:'Marketing a predaj',
+  logistics2:'Logistika a prevádzka', hr:'Nábor a riadenie ľudí',
+  chatgpt:'ChatGPT', claude:'Claude / Claude.ai', copilot:'Microsoft Copilot',
+  gemini:'Gemini', deepl:'DeepL', grammarly:'Grammarly', jasper:'Jasper',
+  zapier:'Zapier', make:'Make (Integromat)', uipath:'UiPath',
+  powerautomate:'Power Automate', notionai:'Notion AI', hubspot:'HubSpot',
+  canvaai:'Canva AI', adcreative:'AdCreative.ai', mailchimp:'Mailchimp AI',
+  tidio:'Tidio', freshdesk:'Freshdesk', intercom:'Intercom',
+  factorial:'Factorial HR', personio:'Personio', notebooklm:'NotebookLM',
+  cost:'Zníženie nákladov', efficiency:'Zvýšenie efektivity',
+  automation:'Automatizácia', staff:'Nedostatok zamestnancov',
+  competition:'Tlak konkurencie', customer:'Zlepšenie skúsenosti zákazníkov',
+  lt6m:'Menej ako 6 mesiacov', '6-12m':'6 – 12 mesiacov',
+  '1-2y':'1 – 2 roky', gt2y:'Viac ako 2 roky',
+  lt3m:'Menej ako 3 mesiace', '3-6m':'3 – 6 mesiacov', '7-12m':'7 – 12 mesiacov',
+  personal:'Osobné náklady', services:'Externé služby',
+  material:'Materiálové náklady', commercial:'Obchodné náklady',
+  errors:'Náklady na chybovosť', overhead:'Réžijné náklady', none:'AI zatiaľ nepomohla',
+  '0-3':'0 – 3 hodiny', '4-8':'4 – 8 hodín', '9-15':'9 – 15 hodín',
+  '15plus':'Viac ako 15 hodín', unknown:'Neviem / Nesledujeme',
+  '1-15':'1 – 15 zamestnancov', '16-50':'16 – 50 zamestnancov',
+  '51-100':'51 – 100 zamestnancov', '100plus':'Viac ako 100',
+  performance:'Zvýšenie výkonu', competencies:'Rozšírenie kompetencií',
+  education:'Ďalšie vzdelávanie', strategic:'Strategické úlohy', notyet:'Bez zmeny',
+  positions_remove:'Zrušenie pozícií', positions_add:'Nové pozície',
+  reorganize:'Reorganizácia tímu', no_change:'Žiadne zmeny', not_considered:'Nezvažované',
+  lt500:'Do 500 €', '500-2000':'500 – 2 000 €', '2000-5000':'2 000 – 5 000 €', gt5000:'Viac ako 5 000 €',
+  '3-6m_roi':'3 – 6 mesiacov', '7-12m_roi':'7 – 12 mesiacov', gt2y_roi:'Viac ako 2 roky', none_roi:'Investícia sa nevrátila',
+  barrier_cost:'Vysoké vstupné náklady', expertise:'Nedostatok znalostí',
+  resistance:'Odpor zamestnancov', legal:'Legislatívna náročnosť (GDPR)', data:'Nekvalitné vstupné dáta',
+  active:'Áno, aktívne', inprogress:'V procese implementácie',
+};
+
+function mv(v: string) { return v.split(', ').map(x => valueMap[x] || x).join(', '); }
 
 export default function SurveyPage() {
-  const [currentSection, setCurrentSection] = useState(0);
-  const [formData, setFormData] = useState<Record<string, any>>({
-    id: `resp-${Date.now()}`
-  });
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitted, setSubmitted] = useState<'success' | 'no' | null>(null);
+  const [sec, setSec] = useState(0);
+  const [data, setData] = useState<Record<string,any>>({});
+  const [extras, setExtras] = useState<Record<string,string>>({});
+  const [done, setDone] = useState<'yes'|'no'|null>(null);
+  const [submitting, setSubmitting] = useState(false);
 
-  const progressPercent = Math.round((currentSection / (SECTIONS_COUNT - 1)) * 100);
+  const pct = sec === 0 ? 0 : Math.round((sec / 5) * 100);
 
-  const updateField = (name: string, value: any, isCheckbox = false) => {
-    if (isCheckbox) {
-      const current = formData[name] || [];
-      const updated = current.includes(value) 
-        ? current.filter((v: any) => v !== value) 
-        : [...current, value];
-      setFormData({ ...formData, [name]: updated });
-    } else {
-      setFormData({ ...formData, [name]: value });
-    }
-  };
-
-  const submitSurvey = async () => {
-    setIsSubmitting(true);
-    try {
-      const response = await fetch('/api/submit', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
-      });
-
-      if (response.ok) setSubmitted('success');
-      else throw new Error('Chyba pri ukladaní.');
-    } catch (e: any) {
-      alert('Chyba: ' + e.message);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  if (submitted) {
-    return (
-      <main className="min-h-screen bg-[#060a16] text-[#e2e8f0] flex items-center justify-center p-6">
-        <div className="max-w-xl text-center space-y-6">
-          <div className="mx-auto w-24 h-24 rounded-full flex items-center justify-center border-2 border-[#34d399] bg-[#34d399]/10 text-[#34d399]">
-            <CheckCircle2 size={48} />
-          </div>
-          <h2 className="text-4xl font-bold font-syne tracking-tight">Všetko prebehlo úspešne!</h2>
-          <p className="text-[#6d7f9a] text-lg">Vaše dáta sú bezpečne uložené v PostgreSQL a Google Tabuľke.</p>
-        </div>
-      </main>
-    );
+  function radio(name: string, value: string) {
+    setData(d => ({ ...d, [name]: value }));
+  }
+  function checkbox(name: string, value: string) {
+    setData(d => {
+      const cur: string[] = d[name] || [];
+      return { ...d, [name]: cur.includes(value) ? cur.filter(x => x !== value) : [...cur, value] };
+    });
+  }
+  function isChecked(name: string, value: string) {
+    const v = data[name];
+    if (Array.isArray(v)) return v.includes(value);
+    return v === value;
   }
 
+  async function submit() {
+    setSubmitting(true);
+    try {
+      const payload = {
+        vyuzivanie_ai: mv(data.ai_usage || ''),
+        velkost_podniku: mv(data.q1 || ''),
+        oblast_podnikania: mv(data.q2 || '') + (extras.q2 ? ` (${extras.q2})` : ''),
+        oblast_vyuzivania_ai: mv((data.q3 || []).join(', ')),
+        nastroje_ai: mv((data.q_tools || []).join(', ')) + (extras.tools ? `, ${extras.tools}` : ''),
+        dovody_implementacie: mv((data.q_why || []).join(', ')) + (extras.why ? `, ${extras.why}` : ''),
+        dlzka_vyuzivania_ai: mv(data.q_duration || ''),
+        dlzka_implementacie: mv(data.q_impl || ''),
+        nakladove_kategorie: mv((data.q_costs || []).join(', ')) + (extras.costs ? `, ${extras.costs}` : ''),
+        casova_uspora_hodin: mv(data.q_time || ''),
+        pocet_zamestnancov: mv(data.q_teamsize || ''),
+        vyuzitie_casu: mv((data.q_timewhat || []).join(', ')),
+        zmeny_organizacia: mv(data.q_org || ''),
+        vyska_investicie: mv(data.q_invest || ''),
+        navratnost_roi: mv(data.q_roi || ''),
+        prekazka: mv(data.q_barrier || ''),
+      };
+      const res = await fetch('/api/submit', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+      if (res.ok) setDone('yes');
+      else throw new Error('err');
+    } catch {
+      alert('Odoslanie zlyhalo. Skúste znova.');
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  if (done) return (
+    <div className="wrapper" style={{ textAlign: 'center', padding: '80px 20px' }}>
+      <div className="thankyou-icon" style={{ background: done === 'yes' ? 'rgba(52,211,153,0.12)' : 'rgba(148,163,184,0.1)', border: done === 'yes' ? '2px solid rgba(52,211,153,0.3)' : '2px solid rgba(148,163,184,0.3)', width: 80, height: 80, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 36, margin: '0 auto 28px' }}>
+        {done === 'yes' ? '✓' : '🙏'}
+      </div>
+      <h2 style={{ fontFamily: 'Syne, sans-serif', fontSize: 30, fontWeight: 800, marginBottom: 14, color: done === 'yes' ? 'var(--accent3)' : 'var(--muted)' }}>{done === 'yes' ? 'Ďakujeme!' : 'Ďakujeme za váš čas!'}</h2>
+      <p style={{ color: 'var(--muted)', maxWidth: 420, margin: '0 auto', fontWeight: 300 }}>
+        {done === 'yes' ? 'Vaše odpovede boli úspešne zaznamenané. Výsledky prieskumu prispejú k lepšiemu pochopeniu vplyvu nástrojov umelej inteligencie na malé a stredné podniky na Slovensku.' : 'Tento prieskum je zameraný na firmy, ktoré už nástroje umelej inteligencie aktívne využívajú. Vaša odpoveď bola zaznamenaná.'}
+      </p>
+    </div>
+  );
+
   return (
-    <main className="min-h-screen bg-[#060a16] text-[#e2e8f0] pb-20 pt-12 px-6">
-      <div className="max-w-[760px] mx-auto relative z-10">
-        <div className="mb-12">
-          <div className="flex justify-between items-center text-xs font-bold text-[#6d7f9a] uppercase mb-3">
-             <span>Krok {currentSection} z {SECTIONS_COUNT - 1}</span>
-             <span>{progressPercent}%</span>
-          </div>
-          <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
-            <div className="h-full bg-gradient-to-r from-[#63b3ed] to-[#a78bfa] transition-all duration-700" style={{ width: `${progressPercent}%` }} />
-          </div>
-        </div>
-
-        <div className="bg-[#111827]/70 border border-white/10 backdrop-blur-3xl rounded-[2.5rem] p-8 md:p-12 shadow-2xl">
-          
-          {currentSection === 0 && (
-            <Section title="Využívanie AI" sub="Základný filter" icon={<Bot size={28}/>}>
-              <Question label="Využíva vaša firma aktuálne nástroje umelej inteligencie?">
-                <Option label="Áno, aktívne" selected={formData['vyuziva_ai'] === 'Áno'} onClick={() => updateField('vyuziva_ai', 'Áno')} />
-                <Option label="Sme v procese" selected={formData['vyuziva_ai'] === 'V procese'} onClick={() => updateField('vyuziva_ai', 'V procese')} />
-                <Option label="Plánujeme" selected={formData['vyuziva_ai'] === 'Plánujeme'} onClick={() => { updateField('vyuziva_ai', 'Plánujeme'); setSubmitted('no'); }} />
-                <Option label="Nie a neplánujeme" selected={formData['vyuziva_ai'] === 'Nie'} onClick={() => { updateField('vyuziva_ai', 'Nie'); setSubmitted('no'); }} />
-              </Question>
-              <NextBtn onClick={() => currentSection < SECTIONS_COUNT-1 && setCurrentSection(currentSection+1)} />
-            </Section>
-          )}
-
-          {currentSection === 1 && (
-            <Section title="I. Profil podniku" icon={<Building size={28}/>}>
-              <Question label="Veľkosť podniku:">
-                 <Option label="Malý podnik (10-49)" selected={formData['velkost_podniku'] === 'Malý'} onClick={() => updateField('velkost_podniku', 'Malý')} />
-                 <Option label="Stredný podnik (50-249)" selected={formData['velkost_podniku'] === 'Stredný'} onClick={() => updateField('velkost_podniku', 'Stredný')} />
-              </Question>
-              <Question label="Oblasť podnikania:">
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                   {['IT & Telco', 'Marketing', 'Financie', 'Výroba', 'E-commerce', 'Iné'].map(v => (
-                     <Option key={v} label={v} selected={formData['oblast_podnikania'] === v} onClick={() => updateField('oblast_podnikania', v)} />
-                   ))}
-                 </div>
-              </Question>
-              <div className="flex justify-between pt-6">
-                <button onClick={() => setCurrentSection(0)} className="text-[#6d7f9a] font-bold">Späť</button>
-                <NextBtn onClick={() => setCurrentSection(2)} />
-              </div>
-            </Section>
-          )}
-
-          {currentSection === 2 && (
-            <Section title="II. Oblasti a nástroje" icon={<Zap size={28}/>}>
-              <Question label="V ktorých oblastiach využívate AI? (Viacero)">
-                 {['Zákaznícka podpora', 'Marketing', 'Analýza dát', 'Procesy', 'HR'].map(v => (
-                   <Option key={v} label={v} selected={(formData['oblasti_vyuzitia'] || []).includes(v)} onClick={() => updateField('oblasti_vyuzitia', v, true)} />
-                 ))}
-              </Question>
-              <Question label="Konkrétne AI nástroje:">
-                 {['ChatGPT', 'Claude', 'Copilot', 'Vlastné riešenie', 'Iné'].map(v => (
-                   <Option key={v} label={v} selected={(formData['ai_nastroje'] || []).includes(v)} onClick={() => updateField('ai_nastroje', v, true)} />
-                 ))}
-              </Question>
-              <div className="flex justify-between pt-6">
-                <button onClick={() => setCurrentSection(1)} className="text-[#6d7f9a] font-bold">Späť</button>
-                <NextBtn onClick={() => setCurrentSection(3)} />
-              </div>
-            </Section>
-          )}
-
-          {currentSection === 3 && (
-            <Section title="III. Čas a úspory" icon={<Timer size={28}/>}>
-              <Question label="Dĺžka využívania AI:">
-                 {['Zatiaľ < 3 mes.', '3-12 mesiacov', '1-2 roky', '> 2 roky'].map(v => (
-                   <Option key={v} label={v} selected={formData['dlzka_vyuzivania'] === v} onClick={() => updateField('dlzka_vyuzivania', v)} />
-                 ))}
-              </Question>
-              <Question label="Priemerná časová úspora na pracovníka:">
-                 {['Do 5%', '5% – 15%', '15% – 30%', 'Viac ako 30%'].map(v => (
-                   <Option key={v} label={v} selected={formData['časová_úspora'] === v} onClick={() => updateField('časová_úspora', v)} />
-                 ))}
-              </Question>
-              <div className="flex justify-between pt-6">
-                <button onClick={() => setCurrentSection(2)} className="text-[#6d7f9a] font-bold">Späť</button>
-                <NextBtn onClick={() => setCurrentSection(4)} />
-              </div>
-            </Section>
-          )}
-
-          {currentSection === 4 && (
-            <Section title="IV. Investície a ROI" icon={<Banknote size={28}/>}>
-              <Question label="Výška investície do AI:">
-                 {['Zanedbateľná (free)', 'Do 5 000 EUR', '5 000 – 20 000 EUR', '> 20 000 EUR'].map(v => (
-                   <Option key={v} label={v} selected={formData['vyska_investicie'] === v} onClick={() => updateField('vyska_investicie', v)} />
-                 ))}
-              </Question>
-              <Question label="Finančná návratnosť (ROI):">
-                 {['Do 3 mesiacov', '3–12 mesiacov', 'Viac ako rok', 'Zatiaľ nemeriame'].map(v => (
-                   <Option key={v} label={v} selected={formData['navratnost_roi'] === v} onClick={() => updateField('navratnost_roi', v)} />
-                 ))}
-              </Question>
-              <div className="flex justify-between pt-6">
-                <button onClick={() => setCurrentSection(3)} className="text-[#6d7f9a] font-bold">Späť</button>
-                <NextBtn onClick={() => setCurrentSection(5)} />
-              </div>
-            </Section>
-          )}
-
-          {currentSection === 5 && (
-            <Section title="V. Bariéry a odoslanie" icon={<AlertCircle size={28}/>}>
-              <Question label="Najväčšia prekážka:">
-                 {['Dáta a súkromie', 'Nedostatok znalostí', 'Vysoké náklady', 'Etika', 'Iné'].map(v => (
-                   <Option key={v} label={v} selected={formData['najvacsia_prekazka'] === v} onClick={() => updateField('najvacsia_prekazka', v)} />
-                 ))}
-              </Question>
-              <div className="flex justify-between pt-8">
-                <button onClick={() => setCurrentSection(4)} className="text-[#6d7f9a] font-bold">Späť</button>
-                <button onClick={submitSurvey} disabled={isSubmitting} className="bg-gradient-to-r from-[#34d399] to-[#059669] text-white font-extrabold py-4 px-12 rounded-2xl flex items-center gap-3 transition-all">
-                  {isSubmitting ? 'Odosielam...' : 'Odoslať'} <Check size={24} />
-                </button>
-              </div>
-            </Section>
-          )}
-
+    <div className="wrapper">
+      <div className="hero">
+        <div className="hero-badge">Akademický prieskum · 2025</div>
+        <h1>Vplyv AI na zníženie prevádzkových nákladov</h1>
+        <p>Pomôžte nám zmapovať, ako nástroje umelej inteligencie menia prevádzkové náklady a efektivitu v malých a stredných podnikoch na Slovensku.</p>
+        <div className="hero-meta">
+          <span>⏱ <strong>5 minút</strong> vyplnenia</span>
+          <span>🔒 <strong>Anonymné</strong> odpovede</span>
+          <span>📊 <strong>5 sekcií</strong></span>
         </div>
       </div>
-    </main>
+
+      <div className="progress-label">
+        <span>{sec === 0 ? 'Úvodná otázka' : `Sekcia ${sec} z 5`}</span>
+        <span>{pct}%</span>
+      </div>
+      <div className="progress-bar"><div className="progress-fill" style={{ width: `${pct}%` }} /></div>
+
+      {/* SEC 0 */}
+      {sec === 0 && <div className="section active">
+        <div className="section-header">
+          <div className="section-num blue" style={{ fontSize: 20 }}>🤖</div>
+          <div className="section-title"><h2>Využívanie nástrojov umelej inteligencie</h2><p>Jedna rýchla otázka pre správne nasmerovanie</p></div>
+        </div>
+        <div className="question">
+          <span className="question-label">Využíva vaša firma nástroje umelej inteligencie? <span className="req">*</span></span>
+          <div className="options">
+            <Opt label="✅ Áno, aktívne využívame" checked={isChecked('ai_usage','active')} onClick={() => radio('ai_usage','active')} />
+            <Opt label="🔄 Áno, sme v procese implementácie" checked={isChecked('ai_usage','inprogress')} onClick={() => radio('ai_usage','inprogress')} />
+            <Opt label="🔍 Nie, ale plánujeme v budúcnosti" checked={isChecked('ai_usage','planning')} onClick={() => radio('ai_usage','planning')} />
+            <Opt label="❌ Nie, a ani neplánujeme" checked={isChecked('ai_usage','no')} onClick={() => radio('ai_usage','no')} />
+          </div>
+        </div>
+        <div className="nav"><div /><button className="btn btn-primary" onClick={() => {
+          if (!data.ai_usage) { alert('Prosím vyberte jednu možnosť.'); return; }
+          if (data.ai_usage === 'planning' || data.ai_usage === 'no') setDone('no');
+          else setSec(1);
+        }}>Ďalej →</button></div>
+      </div>}
+
+      {/* SEC 1 */}
+      {sec === 1 && <div className="section active">
+        <div className="section-header"><div className="section-num blue">I</div><div className="section-title"><h2>Profil podniku</h2><p>Pomôžte nám zaradiť váš podnik do správnej kategórie</p></div></div>
+        <div className="question">
+          <span className="question-label">Veľkosť podniku <span className="req">*</span></span>
+          <div className="options">
+            <Opt label={<>Malý podnik<span className="opt-sub">10 – 49 zamestnancov</span></>} checked={isChecked('q1','small')} onClick={() => radio('q1','small')} />
+            <Opt label={<>Stredný podnik<span className="opt-sub">50 – 249 zamestnancov</span></>} checked={isChecked('q1','medium')} onClick={() => radio('q1','medium')} />
+          </div>
+        </div>
+        <hr className="q-divider" />
+        <div className="question">
+          <span className="question-label">Hlavná oblasť podnikania <span className="req">*</span></span>
+          <div className="options">
+            {[['ecom','Maloobchod a veľkoobchod','E-commerce'],['industry','Priemyselná výroba a strojárstvo'],['construction','Stavebníctvo a reality'],['logistics','Doprava, logistika a skladovanie'],['horeca','Ubytovacie a stravovacie služby','HoReCa'],['finance','Finančné a poistné služby'],['it','Informačné technológie a telekomunikácie'],['admin','Administratívne a podporné služby'],['consulting','Poradenstvo, účtovníctvo a audit'],['marketing','Marketing, reklama a kreatívny priemysel'],['other','Iné']].map(([v,l,s]) => (
+              <Opt key={v} label={<>{l}{s ? <span className="opt-sub">{s}</span> : null}</>} checked={isChecked('q2',v)} onClick={() => radio('q2',v)} />
+            ))}
+          </div>
+          {isChecked('q2','other') && <input className="text-input" style={{marginTop:10}} placeholder="Uveďte oblasť podnikania…" value={extras.q2||''} onChange={e => setExtras(x => ({...x,q2:e.target.value}))} />}
+        </div>
+        <div className="nav"><button className="btn btn-ghost" onClick={() => setSec(0)}>← Späť</button><button className="btn btn-primary" onClick={() => setSec(2)}>Ďalej →</button></div>
+      </div>}
+
+      {/* SEC 2 */}
+      {sec === 2 && <div className="section active">
+        <div className="section-header"><div className="section-num purple">II</div><div className="section-title"><h2>Nasadenie nástrojov umelej inteligencie</h2><p>Ako a prečo vaša firma využíva nástroje AI?</p></div></div>
+        <div className="question">
+          <span className="question-label">V akej oblasti využívate AI? <span className="req">*</span></span>
+          <span className="question-hint">Možnosť výberu viacerých odpovedí</span>
+          <div className="options">
+            {[['content','✍️ Tvorba obsahu a komunikácia'],['support','💬 Zákaznícka podpora'],['admin','🗂️ Automatizácia administratívy'],['marketing','📣 Marketing a predaj'],['logistics','🚚 Logistika a prevádzka'],['hr','👥 Nábor a riadenie ľudí']].map(([v,l]) => (
+              <Opt key={v} label={l} multi checked={isChecked('q3',v)} onClick={() => checkbox('q3',v)} />
+            ))}
+          </div>
+        </div>
+        <hr className="q-divider" />
+        <div className="question">
+          <span className="question-label">Ktoré nástroje AI využívate? <span className="req">*</span></span>
+          <span className="question-hint">Možnosť výberu viacerých odpovedí</span>
+          <div className="tools-grid">
+            {['chatgpt','claude','copilot','gemini','deepl','grammarly','jasper','zapier','make','uipath','powerautomate','notionai','hubspot','canvaai','adcreative','mailchimp','tidio','freshdesk','intercom','factorial','personio','notebooklm'].map(v => (
+              <Opt key={v} label={valueMap[v]||v} multi checked={isChecked('q_tools',v)} onClick={() => checkbox('q_tools',v)} />
+            ))}
+          </div>
+          <input className="text-input" style={{marginTop:10}} placeholder="Iné nástroje (uveďte)…" value={extras.tools||''} onChange={e => setExtras(x => ({...x,tools:e.target.value}))} />
+        </div>
+        <hr className="q-divider" />
+        <div className="question">
+          <span className="question-label">Prečo ste sa rozhodli implementovať AI? <span className="req">*</span></span>
+          <span className="question-hint">Možnosť výberu viacerých odpovedí</span>
+          <div className="options">
+            {[['cost','💰 Zníženie prevádzkových nákladov'],['efficiency','⚡ Zvýšenie rýchlosti a efektivity'],['automation','🤖 Automatizácia opakujúcich sa úloh'],['staff','👥 Nedostatok kvalifikovaných zamestnancov'],['competition','📈 Tlak konkurencie'],['customer','😊 Zlepšenie zákazníckej skúsenosti']].map(([v,l]) => (
+              <Opt key={v} label={l} multi checked={isChecked('q_why',v)} onClick={() => checkbox('q_why',v)} />
+            ))}
+          </div>
+          <input className="text-input" style={{marginTop:10}} placeholder="Iný dôvod (uveďte)…" value={extras.why||''} onChange={e => setExtras(x => ({...x,why:e.target.value}))} />
+        </div>
+        <hr className="q-divider" />
+        <div className="question">
+          <span className="question-label">Ako dlho vaša firma využíva AI? <span className="req">*</span></span>
+          <div className="options">
+            {[['lt6m','Menej ako 6 mesiacov'],['6-12m','6 – 12 mesiacov'],['1-2y','1 – 2 roky'],['gt2y','Viac ako 2 roky']].map(([v,l]) => (
+              <Opt key={v} label={l} checked={isChecked('q_duration',v)} onClick={() => radio('q_duration',v)} />
+            ))}
+          </div>
+        </div>
+        <hr className="q-divider" />
+        <div className="question">
+          <span className="question-label">Ako dlho trvala implementácia? <span className="req">*</span></span>
+          <div className="options">
+            {[['lt3m','Menej ako 3 mesiace'],['3-6m','3 – 6 mesiacov'],['7-12m','7 – 12 mesiacov'],['1-2y','1 – 2 roky'],['gt2y','Viac ako 2 roky']].map(([v,l]) => (
+              <Opt key={v} label={l} checked={isChecked('q_impl',v)} onClick={() => radio('q_impl',v)} />
+            ))}
+          </div>
+        </div>
+        <div className="nav"><button className="btn btn-ghost" onClick={() => setSec(1)}>← Späť</button><button className="btn btn-primary" onClick={() => setSec(3)}>Ďalej →</button></div>
+      </div>}
+
+      {/* SEC 3 */}
+      {sec === 3 && <div className="section active">
+        <div className="section-header"><div className="section-num green">III</div><div className="section-title"><h2>Vplyv na prevádzkové náklady</h2><p>V ktorých nákladových kategóriách nástroje AI priniesli úspory?</p></div></div>
+        <div className="question">
+          <span className="question-label">V ktorých kategóriách vám AI pomohla dosiahnuť úspory? <span className="req">*</span></span>
+          <span className="question-hint">Možnosť výberu viacerých odpovedí</span>
+          <div className="options">
+            {[['personal','👤 Osobné náklady','Mzdy, odvody, nadčasy, dohodári'],['services','🛠️ Náklady na externé služby','Outsourcing, agentúry, poradenstvo'],['material','📦 Materiálové a prevádzkové náklady','Zásoby, energie, odpady'],['commercial','💰 Obchodné a marketingové náklady','Reklama, akvizícia zákazníkov'],['errors','⚠️ Náklady na chybovosť','Reklamácie, pokuty, opravy'],['overhead','🏢 Réžijné náklady','Prenájom, administratíva, IT'],['none','❌ Nástroje AI zatiaľ nepomohli znížiť náklady']].map(([v,l,s]) => (
+              <Opt key={v} label={<>{l}{s ? <span className="opt-sub">{s}</span> : null}</>} multi checked={isChecked('q_costs',v)} onClick={() => checkbox('q_costs',v)} />
+            ))}
+          </div>
+          <input className="text-input" style={{marginTop:10}} placeholder="Iná kategória (uveďte)…" value={extras.costs||''} onChange={e => setExtras(x => ({...x,costs:e.target.value}))} />
+        </div>
+        <div className="nav"><button className="btn btn-ghost" onClick={() => setSec(2)}>← Späť</button><button className="btn btn-primary" onClick={() => setSec(4)}>Ďalej →</button></div>
+      </div>}
+
+      {/* SEC 4 */}
+      {sec === 4 && <div className="section active">
+        <div className="section-header"><div className="section-num orange">IV</div><div className="section-title"><h2>Časová úspora a efektivita</h2><p>Ako nástroje AI ovplyvnili produktivitu vašich zamestnancov?</p></div></div>
+        <div className="question">
+          <span className="question-label">Koľko hodín týždenne ušetria AI jednému zamestnancovi? <span className="req">*</span></span>
+          <div className="options">
+            {[['0-3','0 – 3 hodiny'],['4-8','4 – 8 hodín'],['9-15','9 – 15 hodín'],['15plus','Viac ako 15 hodín'],['unknown','Neviem / Nesledujeme to']].map(([v,l]) => (
+              <Opt key={v} label={l} checked={isChecked('q_time',v)} onClick={() => radio('q_time',v)} />
+            ))}
+          </div>
+        </div>
+        <hr className="q-divider" />
+        <div className="question">
+          <span className="question-label">Koľko zamestnancov je vo vašom tíme? <span className="req">*</span></span>
+          <div className="options">
+            {[['1-15','1 – 15 zamestnancov'],['16-50','16 – 50 zamestnancov'],['51-100','51 – 100 zamestnancov'],['100plus','Viac ako 100 zamestnancov']].map(([v,l]) => (
+              <Opt key={v} label={l} checked={isChecked('q_teamsize',v)} onClick={() => radio('q_teamsize',v)} />
+            ))}
+          </div>
+        </div>
+        <hr className="q-divider" />
+        <div className="question">
+          <span className="question-label">Na čo zamestnanci využili ušetrený čas? <span className="req">*</span></span>
+          <span className="question-hint">Možnosť výberu viacerých odpovedí</span>
+          <div className="options">
+            {[['performance','📈 Zvýšenie výkonu','Viac výstupu za rovnaký čas'],['competencies','🧠 Rozšírenie kompetencií a zodpovedností'],['education','🎓 Ďalšie vzdelávanie a rozvoj'],['strategic','🎯 Presun na strategické úlohy'],['notyet','🔍 Zatiaľ bez zmeny','Čas sa neprerozdelil']].map(([v,l,s]) => (
+              <Opt key={v} label={<>{l}{s ? <span className="opt-sub">{s}</span> : null}</>} multi checked={isChecked('q_timewhat',v)} onClick={() => checkbox('q_timewhat',v)} />
+            ))}
+          </div>
+        </div>
+        <hr className="q-divider" />
+        <div className="question">
+          <span className="question-label">Uvažujete o zmenách v organizačnej štruktúre? <span className="req">*</span></span>
+          <div className="options">
+            {[['positions_remove','Áno, plánujeme zrušenie niektorých pozícií'],['positions_add','Áno, plánujeme vznik nových pozícií'],['reorganize','Áno, plánujeme reorganizáciu tímu'],['no_change','Nie, neplánujeme žiadne zmeny'],['not_considered','Ešte sme to nezvažovali']].map(([v,l]) => (
+              <Opt key={v} label={l} checked={isChecked('q_org',v)} onClick={() => radio('q_org',v)} />
+            ))}
+          </div>
+        </div>
+        <div className="nav"><button className="btn btn-ghost" onClick={() => setSec(3)}>← Späť</button><button className="btn btn-primary" onClick={() => setSec(5)}>Ďalej →</button></div>
+      </div>}
+
+      {/* SEC 5 */}
+      {sec === 5 && <div className="section active">
+        <div className="section-header"><div className="section-num pink">V</div><div className="section-title"><h2>Návratnosť investície a bariéry</h2><p>Posledná sekcia — už len chvíľka!</p></div></div>
+        <div className="question">
+          <span className="question-label">Aká bola výška investície do AI? <span className="req">*</span></span>
+          <div className="options">
+            {[['lt500','Do 500 €'],['500-2000','500 – 2 000 €'],['2000-5000','2 000 – 5 000 €'],['gt5000','Viac ako 5 000 €']].map(([v,l]) => (
+              <Opt key={v} label={l} checked={isChecked('q_invest',v)} onClick={() => radio('q_invest',v)} />
+            ))}
+          </div>
+        </div>
+        <hr className="q-divider" />
+        <div className="question">
+          <span className="question-label">Aký bol čas návratnosti investície (ROI)? <span className="req">*</span></span>
+          <div className="options">
+            {[['lt3m',<>Menej ako 3 mesiace<span className="opt-sub">Rýchla návratnosť</span></>],['3-6m','3 – 6 mesiacov'],['7-12m','7 – 12 mesiacov'],['1-2y','1 – 2 roky'],['gt2y','Viac ako 2 roky'],['none','Investícia sa zatiaľ nevrátila']].map(([v,l]) => (
+              <Opt key={v as string} label={l} checked={isChecked('q_roi',v as string)} onClick={() => radio('q_roi',v as string)} />
+            ))}
+          </div>
+        </div>
+        <hr className="q-divider" />
+        <div className="question">
+          <span className="question-label">Čo je najväčšou prekážkou pri dosahovaní úspor cez AI? <span className="req">*</span></span>
+          <div className="options">
+            {[['barrier_cost',<>💸 Vysoké vstupné náklady<span className="opt-sub">Licencie, implementácia, integrácia</span></>],['expertise',<>🧠 Nedostatok odborných znalostí<span className="opt-sub">Expertízna priepasť v tíme</span></>],['resistance',<>😟 Odpor zamestnancov<span className="opt-sub">Strach z technológie alebo zmeny</span></>],['legal',<>📋 Legislatívna náročnosť<span className="opt-sub">GDPR a regulačné požiadavky</span></>],['data',<>📂 Nekvalitné vstupné dáta<span className="opt-sub">Neštruktúrované alebo neúplné dáta</span></>]].map(([v,l]) => (
+              <Opt key={v as string} label={l} checked={isChecked('q_barrier',v as string)} onClick={() => radio('q_barrier',v as string)} />
+            ))}
+          </div>
+        </div>
+        <div className="nav">
+          <button className="btn btn-ghost" onClick={() => setSec(4)}>← Späť</button>
+          <button className="btn btn-success" onClick={submit} disabled={submitting}>{submitting ? 'Odosielam…' : '✓ Odoslať dotazník'}</button>
+        </div>
+      </div>}
+    </div>
   );
 }
 
-const Section = ({ title, sub, icon, children }: any) => (
-  <div className="space-y-8 animate-in fade-in duration-500">
-    <div className="flex items-center gap-5 pb-6 border-b border-white/5">
-      <div className="w-14 h-14 bg-white/5 text-[#63b3ed] rounded-2xl flex items-center justify-center">{icon}</div>
-      <div><h2 className="text-2xl font-bold font-syne">{title}</h2>{sub && <p className="text-sm text-[#6d7f9a]">{sub}</p>}</div>
-    </div>
-    {children}
-  </div>
-);
-
-const Question = ({ label, children }: any) => (
-  <div className="space-y-4">
-    <p className="text-lg font-bold">{label}</p>
-    <div className="grid grid-cols-1 gap-3">{children}</div>
-  </div>
-);
-
-const Option = ({ label, selected, onClick }: any) => (
-  <button onClick={onClick} className={`text-left p-5 rounded-2xl border transition-all flex items-center gap-4 ${selected ? 'bg-[#63b3ed]/10 border-[#63b3ed]' : 'bg-white/5 border-white/5 hover:border-white/20'}`}>
-     <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${selected ? 'bg-[#63b3ed] border-[#63b3ed]' : 'border-white/20'}`}>{selected && <Check size={12} className="text-white"/>}</div>
-     <span className="font-bold">{label}</span>
-  </button>
-);
-
-const NextBtn = ({ onClick }: any) => (
-  <div className="flex justify-end pt-4">
-    <button onClick={onClick} className="bg-[#63b3ed] hover:translate-y-[-2px] text-white font-bold py-4 px-10 rounded-2xl flex items-center gap-3 transition-all">
-      Ďalej <ArrowRight size={20} />
-    </button>
-  </div>
-);
+function Opt({ label, checked, onClick, multi }: { label: any, checked: boolean, onClick: () => void, multi?: boolean }) {
+  return (
+    <label className={`option${multi ? ' multi' : ''}${checked ? ' selected' : ''}`} onClick={onClick} style={{cursor:'pointer'}}>
+      <div className={`opt-mark${multi ? ' square' : ''}`} />
+      <div className="opt-text">{label}</div>
+    </label>
+  );
+}
