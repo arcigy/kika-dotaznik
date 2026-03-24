@@ -9,8 +9,8 @@ const config: Config = {
   theme: {
     extend: {
       fontFamily: {
-        syne: ['Syne', 'sans-serif'],
-        sans: ['DM Sans', 'sans-serif'],
+        syne: ['var(--font-syne)', 'sans-serif'],
+        sans: ['var(--font-inter)', 'sans-serif'],
       },
       backgroundImage: {
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
