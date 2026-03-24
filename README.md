@@ -1,21 +1,25 @@
-# AI & MSP Dotazník 2025
+# AI & MSP Prieskum 2025 – Next.js
 
-Anonymný akademický prieskum zameraný na vplyv nástrojov umelej inteligencie na prevádzkové náklady malých a stredných podnikov na Slovensku.
+Produkčne pripravený full-stack projekt s prepojením na PostgreSQL (Railway) a Google Sheets.
 
 ## Stack
+- **Framework**: Next.js 15 (App Router)
+- **Database**: PostgreSQL (Railway)
+- **Sheets**: Google Sheets API Integration
+- **Styling**: Tailwind CSS
+- **Interactivity**: Lucide Icons & Framer-look motion
 
-- Čistý HTML / CSS / JavaScript (zero dependencies)
-- Formspree pre spracovanie formulárov
-- GitHub Pages pre hosting
+## Nastavenie premenných (.env)
+Doplnil som ti šablónu s tvojimi údajmi v `.env`. Doplň tam hostname z Railway pre lokálny test.
 
-## Lokálny vývoj
-
-Stačí otvoriť `index.html` v prehliadači, alebo spustiť jednoduchý server:
-
+## Inštalácia
 ```bash
-npx serve .
+npm install
+npm run dev
 ```
 
-## Nasadenie
+## Lokálne prezeranie
+Navštív `http://localhost:3000` pre zobrazenie dotazníka. 
 
-Projekt je nasadený cez **GitHub Pages** — každý push na `main` sa automaticky publikuje.
+## Nasadenie na Railway
+Stačí pushnúť tento priečinok na GitHub a v Railway prepojiť túto repo. Tie premenné tam už máš nastavené.
